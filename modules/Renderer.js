@@ -2,6 +2,9 @@ import { ApplicationData } from "./Application.js";
 import { Background } from "./Background.js";
 
 export default class Renderer {
+    /** @type {number[]} */
+    #frames = [];
+
     /** @type {CanvasRenderingContext2D} */
     #renderingContext;
 
@@ -21,46 +24,45 @@ export default class Renderer {
         return this.#canvas;
     }
 
-    render() {
-        console.time("Total");
+    get fps() {
+        return this.#frames.length;
+    }
+
+    addFrame(time = performance.now()) {
+        this.#frames = this.#frames.filter(frame => frame > time - 1000);
+        this.#frames.push(time);
+    }
+
+    render(timestamp = 0) {
         requestAnimationFrame(ApplicationData.renderer.render);
 
-        console.group("Update");
-        console.time("Update");
-
+        // ## Debug
+        var start = performance.now();
+        var elapsed = start - timestamp;
+        
+        ApplicationData.renderer.addFrame(start);
+        console.debug("Elapsed: " + elapsed, "FPS: " + ApplicationData.renderer.fps);
+        
+        // ## Update
+        
         // Spawn enemies
 
         // Move all units
-        console.group("Units (Count: " + ApplicationData.units.length + ")");
-        ApplicationData.units.forEach(unit => unit.update());
-        console.groupEnd();
-
-        console.timeEnd("Update");
-        console.groupEnd();
-
-        console.group("Render");
-        console.time("Render");
+        ApplicationData.units.forEach(unit => unit.update(elapsed));
         
+
+        // ## Render
         var ctx = ApplicationData.renderer.renderingContext;
 
         ctx.clearRect(0, 0, 2000, 1000);
 
         // Render Background
-        console.group("Background");
         Background.render(ctx);
-        console.groupEnd();
 
         // Render Units
-        console.group("Units (Count: " + ApplicationData.units.length + ")");
         ApplicationData.units.forEach(unit => unit.render(ctx));
-        console.groupEnd();
 
         // Render Bases
-
-        console.timeEnd("Render");
-        console.groupEnd();
-
-        console.timeEnd("Total");
     }
 }
 
@@ -69,6 +71,14 @@ export class Drawable {
     
     /** @type {{ x: number, y: number }} */
     #position = { x: 0, y: 0 };
+
+    /**
+     * @param {number} x 
+     * @param {number} y 
+     */
+    constructor(x = 0, y = 0) {
+        this.moveTo(x, y);
+    }
 
     /**
      * Render the sprite
@@ -115,7 +125,7 @@ export class Drawable {
      * @param {number} x 
      * @param {number} y 
      */
-    moveBy(x, y) {
+    moveBy(x = 0, y = 0) {
         this.moveTo(this.position.x + x, this.position.y + y);
     }
 

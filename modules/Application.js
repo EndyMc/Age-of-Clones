@@ -1,23 +1,26 @@
 import Renderer from "./Renderer.js";
-import { Unit, UnitTypeEnum } from "./Unit.js";
+import { EnemyUnit, Unit, UnitTypeEnum } from "./Unit.js";
 
 document.body.onload = () => {
-    console.group("OnLoad");
-    
     var unit = new Unit(UnitTypeEnum.fast);
+    var enemyUnit = new EnemyUnit(UnitTypeEnum.ranged);
 
-    unit.moveTo(0, 950 - unit.height);
-
-    ApplicationData.units.push(unit);
+    ApplicationData.units.push(...[ unit, enemyUnit ]);
     ApplicationData.renderer.render();
-
-    console.log("End");
-    console.groupEnd();
 }
 
 export class ApplicationData {
     /** @type {Unit[]} */
     static units = [];
+
+    static get playerUnits() {
+        return ApplicationData.units.filter(u => !u.isEnemy);
+    }
+
+    static get enemyUnits() {
+        return ApplicationData.units.filter(u => u.isEnemy);
+    }
+
 
     /** @type {Renderer} */
     static renderer = new Renderer();

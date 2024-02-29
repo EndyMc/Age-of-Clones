@@ -3,22 +3,24 @@ export class Background {
      * @param {CanvasRenderingContext2D} ctx 
      */
     static render(ctx) {
+        // Sky
         // Mountains etc. / Further background
         // Forest / Closer background
         // Ground
-        console.group("Ground");
         Ground.render(ctx);
-        console.groupEnd();
     }
 
 }
 
-class Ground {
+export class Ground {
+    static position = { x: 0, y: 900 };
+    static dimensions = { width: 2000, height: 100 };
+
     /**
      * @param {CanvasRenderingContext2D} ctx 
      */
     static render(ctx) {
-        ctx.fillStyle = "#333";
-        ctx.fillRect(0, 900, 2000, 100);
+        ctx.fillStyle = "beige";
+        ctx.fillRect(this.position.x, this.position.y, this.dimensions.width, this.dimensions.height);
     }
 }
