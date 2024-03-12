@@ -63,6 +63,8 @@ export default class Renderer {
         ApplicationData.units.forEach(unit => unit.render(ctx));
 
         // Render Bases
+        ApplicationData.playerBase.render(ctx);
+        ApplicationData.enemyBase.render(ctx);
     }
 }
 
@@ -76,8 +78,13 @@ export class Drawable {
      * @param {number} x 
      * @param {number} y 
      */
-    constructor(x = 0, y = 0) {
+    constructor(x = 0, y = 0, width = 50, height = 100, sprite) {
         this.moveTo(x, y);
+
+        this.width = width;
+        this.height = height;
+
+        this.#sprite = sprite;
     }
 
     /**
@@ -89,6 +96,8 @@ export class Drawable {
             // Draw sprite
             ctx.drawImage(this.sprite, this.position.x, this.position.y, this.width, this.height);
         } else {
+            ctx.lineWidth = 1;
+            ctx.lineCap = "square";
             ctx.strokeStyle = "red";
             ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
 
@@ -110,14 +119,6 @@ export class Drawable {
 
     get sprite() {
         return this.#sprite;
-    }
-
-    get width() {
-        return 50;
-    }
-
-    get height() {
-        return 100;
     }
 
     /**

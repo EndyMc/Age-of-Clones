@@ -62,7 +62,7 @@ export class Unit extends Drawable {
      * @param {UnitType} type 
      */
     constructor(type) {
-        super();
+        super(200 + UnitTypeEnum.basic.baseRange);
 
         this.isEnemy = false;
         this.lastAttackTime = performance.now();
@@ -113,9 +113,37 @@ export class Unit extends Drawable {
         return this.#attackRange;
     }
 
-    update(delta = 16) {
-        if (this.health < 10) delete this;
+    /**
+     * @param {CanvasRenderingContext2D} ctx 
+     */
+    render(ctx) {
+        super.render(ctx);
 
+        if (this.health != this.maxHealth) {
+            var x = this.position.x;
+            var y = this.position.y - this.height / 4;
+            
+            var width = this.width;
+            var height = width / 4;
+
+            ctx.fillStyle = "#ccc";
+            ctx.fillRect(x, y, width, height);
+
+            ctx.fillStyle = "rgb(" + (255 * (1 - Math.min(1, this.health / this.maxHealth))) + ", " + (255 * Math.min(1, this.health / this.maxHealth)) + ", 0)";
+            ctx.fillRect(x, y, width * Math.min(1, this.health / this.maxHealth), height);
+
+            // Overheal/shield
+            ctx.fillStyle = "blue";
+            ctx.fillRect(x, y, width * (this.health / this.maxHealth - 1), height);
+
+            ctx.lineWidth = 5;
+            ctx.lineCap = "round"
+            ctx.strokeStyle = "black";
+            ctx.strokeRect(x, y, width, height);
+        }
+    }
+
+    update(delta = 16) {
         if (this.position.x + this.range + this.width >= Math.min(ApplicationData.enemyUnits.map(u => u.position.x))) {
             // Attack the enemy which is in range
             return;
@@ -158,7 +186,7 @@ export class EnemyUnit extends Unit {
     constructor(type) {
         super(type);
 
-        this.position.x = 1900;
+        this.position.x = 1800 - UnitTypeEnum.basic.baseRange - this.width;
         this.isEnemy = true;
     }
 
@@ -166,6 +194,7 @@ export class EnemyUnit extends Unit {
         var closestTarget = ApplicationData.playerUnits.find(a => a.position.x == Math.max(ApplicationData.playerUnits.map(u => u.position.x)));
 
         if (closestTarget != undefined && this.position.x - this.range <= closestTarget.position.x + closestTarget.width) {
+            // Attack the closest target
             // Check cooldown
             if (this.lastAttackTime + (1000 / this.atkSpeed) <= performance.now()) {
                 // Reset cooldown
@@ -175,11 +204,23 @@ export class EnemyUnit extends Unit {
                 closestTarget.damaged(this.atkDamage);
             }
 
-            return;
+            if (this.position.x - UnitTypeEnum.basic.baseRange <= closestTarget.position.x + closestTarget.width) {
+                return;
+            }
+        } else if (closestTarget == undefined && this.position.x - this.range <= ApplicationData.playerBase.position.x + ApplicationData.playerBase.width) {
+            // Attack the base
+            // Check cooldown
+            if (this.lastAttackTime + (1000 / this.atkSpeed) <= performance.now()) {
+                // Reset cooldown
+                this.lastAttackTime = performance.now();
+
+                // Damage the enemy
+                ApplicationData.playerBase.damaged(this.atkDamage)
+            }
         }
         
-        if (this.position.x <= 200 + UnitTypeEnum.basic.baseRange) {
-            // Attack the base
+        if (this.position.x <= ApplicationData.playerBase.position.x + ApplicationData.playerBase.width + UnitTypeEnum.basic.baseRange) {
+            // Don't move through the base
             return;
         }
 
@@ -194,7 +235,7 @@ export class UnitTypeEnum {
     static get brute() { return new UnitType(10, 2, 0.7, 3, 0.5, 25); }
     static get tank() { return new UnitType(10, 2, 0.5, 5, 0.5, 25); }
     static get fast() { return new UnitType(10, 2, 1.7, 0, 2, 25); }
-    static get ranged() { return new UnitType(10, 2, 1, 0, 2, 250); }
+    static get ranged() { return new UnitType(10, 20, 1, 0, 2, 250); }
 }
 
 class UnitType {
