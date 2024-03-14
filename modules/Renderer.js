@@ -69,7 +69,7 @@ export default class Renderer {
 }
 
 export class Drawable {
-    #sprite;
+    sprite;
     
     /** @type {{ x: number, y: number }} */
     #position = { x: 0, y: 0 };
@@ -84,7 +84,7 @@ export class Drawable {
         this.width = width;
         this.height = height;
 
-        this.#sprite = sprite;
+        this.sprite = sprite;
     }
 
     /**
@@ -115,10 +115,6 @@ export class Drawable {
 
     get position() {
         return this.#position;
-    }
-
-    get sprite() {
-        return this.#sprite;
     }
 
     /**

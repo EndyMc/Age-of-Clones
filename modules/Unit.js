@@ -1,5 +1,6 @@
 import { ApplicationData } from "./Application.js";
 import { Ground } from "./Background.js";
+import { CloneImageComposer } from "./CloneComposer.js";
 import { Drawable } from "./Renderer.js";
 
 export class Unit extends Drawable {
@@ -57,12 +58,15 @@ export class Unit extends Drawable {
      */
     #maxHitpoints = 0;
 
+    isAttacking = false;
+    isMoving = false;
+
     /**
      * 
      * @param {UnitType} type 
      */
     constructor(type) {
-        super(200 + UnitTypeEnum.basic.baseRange);
+        super(200 + UnitTypeEnum.basic.baseRange)
 
         this.isEnemy = false;
         this.lastAttackTime = performance.now();
@@ -83,6 +87,8 @@ export class Unit extends Drawable {
 
         this.#hitPoints = type.baseHP + this.#proficiency;
         this.#maxHitpoints = type.baseHP;
+
+        this.imageComposer = new CloneImageComposer();
     }
 
     get health() {
@@ -117,6 +123,8 @@ export class Unit extends Drawable {
      * @param {CanvasRenderingContext2D} ctx 
      */
     render(ctx) {
+        this.sprite = this.imageComposer.compose(this.isEnemy, this.isMoving, false, this.#movementSpeed, this.#attackDamage, this.#defence, this.#attackRange, this.#proficiency);
+
         super.render(ctx);
 
         if (this.health != this.maxHealth) {
@@ -144,6 +152,7 @@ export class Unit extends Drawable {
     }
 
     update(delta = 16) {
+        this.isMoving = false;
         if (this.position.x + this.range + this.width >= Math.min(ApplicationData.enemyUnits.map(u => u.position.x))) {
             // Attack the enemy which is in range
             return;
@@ -151,6 +160,7 @@ export class Unit extends Drawable {
         var movementDistance = this.speed/16 * Math.max(16, delta);
 
         this.moveBy(movementDistance, 0);
+        this.isMoving = true;
 
         if (this.position.x <= 100) this.moveTo(100);
         if (this.position.x >= 1900 - this.width) this.moveTo(100);
@@ -191,6 +201,7 @@ export class EnemyUnit extends Unit {
     }
 
     update(delta = 16) {
+        this.isMoving = false;
         var closestTarget = ApplicationData.playerUnits.find(a => a.position.x == Math.max(ApplicationData.playerUnits.map(u => u.position.x)));
 
         if (closestTarget != undefined && this.position.x - this.range <= closestTarget.position.x + closestTarget.width) {
@@ -227,6 +238,7 @@ export class EnemyUnit extends Unit {
         var movementDistance = (-this.speed)/16 * Math.max(16, delta);
     
         this.moveBy(movementDistance, 0);
+        this.isMoving = true;
     }
 }
 
