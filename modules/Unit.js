@@ -88,7 +88,7 @@ export class Unit extends Drawable {
         this.#hitPoints = type.baseHP + this.#proficiency;
         this.#maxHitpoints = type.baseHP;
 
-        this.imageComposer = new CloneImageComposer();
+        this.imageComposer = new CloneImageComposer(this.isEnemy, this.#movementSpeed, this.#attackDamage, this.#defence, this.#attackRange, this.#proficiency);
     }
 
     get health() {
@@ -123,7 +123,7 @@ export class Unit extends Drawable {
      * @param {CanvasRenderingContext2D} ctx 
      */
     render(ctx) {
-        this.sprite = this.imageComposer.compose(this.isEnemy, this.isMoving, false, this.#movementSpeed, this.#attackDamage, this.#defence, this.#attackRange, this.#proficiency);
+        this.sprite = this.imageComposer.compose(this.isMoving, false);
 
         super.render(ctx);
 
@@ -197,6 +197,8 @@ export class EnemyUnit extends Unit {
         super(type);
 
         this.position.x = 1800 - UnitTypeEnum.basic.baseRange - this.width;
+
+        this.imageComposer.isEnemy = true;
         this.isEnemy = true;
     }
 
@@ -246,7 +248,7 @@ export class UnitTypeEnum {
     static get basic() { return new UnitType(10, 2, 1, 1, 1, 25); }
     static get brute() { return new UnitType(10, 2, 0.7, 3, 0.5, 25); }
     static get tank() { return new UnitType(10, 2, 0.5, 5, 0.5, 25); }
-    static get fast() { return new UnitType(10, 2, 1.7, 0, 2, 25); }
+    static get fast() { return new UnitType(10, 2, 2, 0, 2, 25); }
     static get ranged() { return new UnitType(10, 20, 1, 0, 2, 250); }
 }
 

@@ -12,6 +12,7 @@ document.body.onload = async () => {
         var image = new Image();
         image.src = "sprites/" + ApplicationData.IMAGES_TO_LOAD[i] + ".png";
         console.log("Loading: " + image.src);
+
         await new Promise((resolve, reject) => {
             image.onload = (ev) => {
                 ApplicationData.images[ApplicationData.IMAGES_TO_LOAD[i]] = image;
@@ -20,8 +21,6 @@ document.body.onload = async () => {
             }
         });
     }
-
-    console.log(ApplicationData.images);
 
     ApplicationData.units.push(...[ unit, enemyUnit ]);
     ApplicationData.renderer.render();
@@ -47,5 +46,7 @@ export class ApplicationData {
     static renderer = new Renderer();
 
     static images = {};
-    static IMAGES_TO_LOAD = [ "Legs-Sheet", "Enemy-Legs-Sheet" ];
+    static IMAGES_TO_LOAD = [ "Legs-Sheet", "Enemy-Legs-Sheet", "Torso" ];
 }
+
+window.A = ApplicationData;
