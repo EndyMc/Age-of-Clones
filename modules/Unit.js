@@ -4,6 +4,8 @@ import { CloneImageComposer } from "./CloneComposer.js";
 import { Drawable } from "./Renderer.js";
 
 export class Unit extends Drawable {
+    static MAX_UNIT_LEVEL = 10;
+
     /**
      * The attack speed that this unit has.
      * Lowers the time between attacks.
@@ -83,7 +85,7 @@ export class Unit extends Drawable {
 
         this.#attackRange = type.baseRange;
 
-        this.#proficiency = Math.floor((type.baseDMG + type.baseDMG + type.baseSpeed) / 10);
+        this.#proficiency = Math.floor((type.baseDMG * 2 + type.baseSpeed) / 3);
 
         this.#hitPoints = type.baseHP + this.#proficiency;
         this.#maxHitpoints = type.baseHP;
@@ -92,31 +94,31 @@ export class Unit extends Drawable {
     }
 
     get health() {
-        return this.#hitPoints;
+        return this.#hitPoints * 5;
     }
 
     get maxHealth() {
-        return this.#maxHitpoints;
+        return this.#maxHitpoints * 5;
     }
 
     get atkDamage() {
-        return this.#attackDamage + this.#proficiency;
+        return (this.#attackDamage + this.#proficiency) * 7;
     }
 
     get speed() {
-        return this.#movementSpeed + this.#proficiency * 0.5;
+        return (this.#movementSpeed + this.#proficiency * 0.5) * 1;
     }
 
     get atkSpeed() {
-        return this.#attackSpeed + this.#proficiency * 0.5;
+        return (this.#attackSpeed + this.#proficiency * 0.5) * 1;
     }
 
     get defence() {
-        return this.#defence + this.#proficiency;
+        return (this.#defence + this.#proficiency) * 2;
     }
 
     get range() {
-        return this.#attackRange;
+        return (this.#attackRange) * 10;
     }
 
     /**
@@ -127,7 +129,7 @@ export class Unit extends Drawable {
 
         super.render(ctx);
 
-        if (this.health != this.maxHealth) {
+        if (this.health % this.maxHealth != 0) {
             var x = this.position.x;
             var y = this.position.y - this.height / 4;
             
@@ -142,7 +144,15 @@ export class Unit extends Drawable {
 
             // Overheal/shield
             ctx.fillStyle = "blue";
-            ctx.fillRect(x, y, width * (this.health / this.maxHealth - 1), height);
+            ctx.fillRect(x, y, width * Math.min(1, this.health / this.maxHealth - 1), height);
+
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 1;
+            ctx.strokeText(this.health + " / " + this.maxHealth, x + width / 2, y + height / 2);
+            ctx.textAlign = "left";
+            ctx.textBaseline = "alphabetic";
 
             ctx.lineWidth = 5;
             ctx.lineCap = "round"
@@ -205,7 +215,6 @@ export class EnemyUnit extends Unit {
     update(delta = 16) {
         this.isMoving = false;
         var closestTarget = ApplicationData.playerUnits.find(a => a.position.x == Math.max(ApplicationData.playerUnits.map(u => u.position.x)));
-
         if (closestTarget != undefined && this.position.x - this.range <= closestTarget.position.x + closestTarget.width) {
             // Attack the closest target
             // Check cooldown
@@ -231,9 +240,15 @@ export class EnemyUnit extends Unit {
                 ApplicationData.playerBase.damaged(this.atkDamage)
             }
         }
-        
-        if (this.position.x <= ApplicationData.playerBase.position.x + ApplicationData.playerBase.width + UnitTypeEnum.basic.baseRange) {
+
+        var ownIndex = ApplicationData.enemyUnits.findIndex((val) => val == this);
+        var closestAlly = ownIndex == 0 ? undefined : ApplicationData.enemyUnits[ownIndex - 1];
+
+        if (this.position.x <= ApplicationData.playerBase.position.x + ApplicationData.playerBase.width) {
             // Don't move through the base
+            return;
+        } else if (closestAlly != undefined && this.position.x <= closestAlly.position.x + closestAlly.width) {
+            // Don't move through own troops
             return;
         }
 
@@ -252,22 +267,53 @@ export class UnitTypeEnum {
     static get ranged() { return new UnitType(10, 20, 1, 0, 2, 250); }
 }
 
-class UnitType {
+export class UnitType {
     /**
-     * Create a new type of Unit, mainly used as a template.
-     * @param {number} baseHP Hitpoints at lvl 1
-     * @param {number} baseDMG Damage at lvl 1
-     * @param {number} baseSpeed Speed at lvl 1
-     * @param {number} baseDEF Defence at lvl 1
-     * @param {number} baseATKSpeed Attacks per Second at lvl 1
+     * Create a new type of Unit.
+     * @param {number} baseHP Hitpoints
+     * @param {number} baseDMG Damage
+     * @param {number} baseSpeed Speed
+     * @param {number} baseDEF Defence
+     * @param {number} baseATKSpeed Attacks per Second
      * @param {number} baseRange Range
      */
-    constructor(baseHP, baseDMG, baseSpeed = 1, baseDEF, baseATKSpeed, baseRange) {
+    constructor(baseHP, baseDMG, baseSpeed, baseDEF, baseATKSpeed, baseRange) {
         this.baseHP = baseHP;
         this.baseDMG = baseDMG;
         this.baseSpeed = baseSpeed;
         this.baseDEF = baseDEF;
         this.baseATKSpeed = baseATKSpeed;
         this.baseRange = baseRange;
+    }
+
+    /**
+     * 
+     * @param {string | undefined} attribute 
+     */
+    upgrade(attribute) {
+        if (attribute != undefined) {
+            if (this[attribute] >= Unit.MAX_UNIT_LEVEL) throw "Error, Attribute (" + attribute + ") is too high level to be upgraded";
+            this[attribute] += 1;
+        } else {
+            var attributes = [ "baseHP", "baseDMG", "baseSpeed", "baseDEF", "baseATKSpeed", "baseRange" ];
+            for (var i = 0; i < attributes.length; i++) {
+                if (this[attributes[i]] >= Unit.MAX_UNIT_LEVEL) {
+                    attributes.splice(i, 1);
+                    i -= 1;
+                }
+            }
+
+            var attribute = attributes[Math.floor(Math.random() * attributes.length)];
+
+            this[attribute] += 1;
+        }
+    }
+
+    /**
+     * @returns {boolean}
+     */
+    isMax() {
+        var maxLevel = Unit.MAX_UNIT_LEVEL;
+        return this.baseATKSpeed == maxLevel && this.baseDEF == maxLevel && this.baseDMG == maxLevel && this.baseHP == maxLevel && this.baseRange == maxLevel && this.baseSpeed == maxLevel;
     }
 }

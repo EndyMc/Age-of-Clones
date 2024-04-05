@@ -55,7 +55,19 @@ export class CloneImageComposer {
         
         this.isMoving = isMoving;
         this.isAttacking = isAttacking;
+        
+        // Base body - Red if enemy, otherwise it's light blue/white
+        // // Head
+        var head;
+        if (this.isEnemy) {
+            head = this.flip("Head");
+        } else {
+            head = ApplicationData.images["Head"];
+        }
 
+        ctx.drawImage(head, 0, 0, canvas.width, canvas.height);
+
+        // // Legs with or without walking animation
         if (this.isMoving) {
             var now = performance.now();
             if (now - this.lastMovementChange >= 100) {
@@ -71,9 +83,7 @@ export class CloneImageComposer {
         } else {
             ctx.drawImage(ApplicationData.images["Legs-Sheet"], this.movementFrame * drawable.width, 0, drawable.width, drawable.height, 0, 0, drawable.width, drawable.height);
         }
-
-
-        // Base body - Red if enemy, otherwise it's light blue/white
+        
         // Shoes - Affected by SPEED
         // Weapon - Affected by DAMAGE
         // Armor - Affected by DEFENCE
@@ -88,7 +98,6 @@ export class CloneImageComposer {
 
         // Eyes - Affected by RANGE
         // Hair/Knot - Affected by PROFICIENCY
-
 
         return canvas;
     }
@@ -141,12 +150,25 @@ export class CloneImageComposer {
      * @param {number} color 
      * @returns {HTMLCanvasElement}
      */
-    flip(imageName, color) {
+    flip(imageName, color = undefined) {
         if (CloneImageComposer.TRANSFORMED_IMAGES[imageName]?.["flip" + color] != undefined) {
             return CloneImageComposer.TRANSFORMED_IMAGES[imageName]["flip" + color];
         }
 
-        var image = this.recolor(imageName, color);
+        var image;
+        if (color == undefined) {
+            var imageToFlip = ApplicationData.images[imageName];
+
+            image = document.createElement("canvas");
+
+            image.width = imageToFlip.width;
+            image.height = imageToFlip.height;
+
+            image.getContext("2d").drawImage(imageToFlip, 0, 0);
+        } else {
+            image = this.recolor(imageName, color);
+        }
+        
         var imageData = image.getContext("2d").getImageData(0, 0, image.width, image.height);
 
         var canvas = document.createElement("canvas");

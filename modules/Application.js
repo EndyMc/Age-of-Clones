@@ -3,9 +3,10 @@ import Renderer from "./Renderer.js";
 import { EnemyUnit, Unit, UnitTypeEnum } from "./Unit.js";
 
 document.body.onload = async () => {
-    var unit = new Unit(UnitTypeEnum.fast);
-    var enemyUnit = new EnemyUnit(UnitTypeEnum.ranged);
+//    var unit = new Unit(UnitTypeEnum.fast);
+//    var enemyUnit = new EnemyUnit(UnitTypeEnum.ranged);
 
+    ApplicationData.enemyBase.isCPUBase = true;
     ApplicationData.enemyBase.position.x = ApplicationData.renderer.canvas.width - ApplicationData.enemyBase.width;
 
     for (var i = 0; i < ApplicationData.IMAGES_TO_LOAD.length; i++) {
@@ -22,7 +23,7 @@ document.body.onload = async () => {
         });
     }
 
-    ApplicationData.units.push(...[ unit, enemyUnit ]);
+//    ApplicationData.units.push(...[ unit, enemyUnit ]);
     ApplicationData.renderer.render();
 }
 
@@ -46,7 +47,7 @@ export class ApplicationData {
     static renderer = new Renderer();
 
     static images = {};
-    static IMAGES_TO_LOAD = [ "Legs-Sheet", "Enemy-Legs-Sheet", "Torso" ];
+    static IMAGES_TO_LOAD = [ "Legs-Sheet", "Enemy-Legs-Sheet", "Torso", "Head" ];
 }
 
 window.A = ApplicationData;

@@ -46,6 +46,8 @@ export default class Renderer {
         // ## Update
         
         // Spawn enemies
+        ApplicationData.playerBase.update();
+        ApplicationData.enemyBase.update();
 
         // Move all units
         ApplicationData.units.forEach(unit => unit.update(elapsed));
